@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Owen & Yilin — A Story</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="loader">
+    <div class="loader-inner">
+      <div class="loader-bar"><div class="loader-fill"></div></div>
+      <p class="loader-text">Loading story...</p>
+    </div>
+  </div>
+
+  <div id="app">
+    <div id="canvas-container">
+      <canvas id="webgl"></canvas>
+    </div>
+
+    <div id="story-panels">
+      <div class="story-panel active" id="panel-0" data-floor="0">
+        <div class="panel-inner">
+          <h1 class="panel-title display">Owen & Yilin</h1>
+          <p class="panel-subtitle">October 15, 2026</p>
+          <p class="panel-body">A love story in five rooms.</p>
+          <p class="panel-hint">Scroll to begin</p>
+        </div>
+      </div>
+
+      <div class="story-panel" id="panel-1" data-floor="1">
+        <div class="panel-inner">
+          <span class="panel-chapter">01</span>
+          <h2 class="panel-title">How we met</h2>
+          <p class="panel-subtitle">McGill University Library, 2021</p>
+          <div class="panel-quotes">
+            <blockquote class="quote-owen"><p>"She asked me where Brazil was."</p><cite>— Owen</cite></blockquote>
+            <blockquote class="quote-yilin"><p>"Loud Chinese guy."</p><cite>— Yilin</cite></blockquote>
+          </div>
+        </div>
+      </div>
+
+      <div class="story-panel" id="panel-2" data-floor="2">
+        <div class="panel-inner">
+          <span class="panel-chapter">02</span>
+          <h2 class="panel-title">First date</h2>
+          <p class="panel-body">The nervous energy of two people discovering each other. A café, two coffees, and a conversation that lasted until they were asked to leave.</p>
+        </div>
+      </div>
+
+      <div class="story-panel" id="panel-3" data-floor="3">
+        <div class="panel-inner">
+          <span class="panel-chapter">03</span>
+          <h2 class="panel-title">Falling in love</h2>
+          <div class="panel-quotes">
+            <blockquote class="quote-owen"><p>"I knew when..."</p><cite>— Owen</cite></blockquote>
+            <blockquote class="quote-yilin"><p>"I knew when..."</p><cite>— Yilin</cite></blockquote>
+          </div>
+        </div>
+      </div>
+
+      <div class="story-panel" id="panel-4" data-floor="4">
+        <div class="panel-inner">
+          <span class="panel-chapter">04</span>
+          <h2 class="panel-title display">The invitation</h2>
+          <div class="invitation-card">
+            <p class="inv-prelude">Together with their families</p>
+            <h3 class="inv-names">Owen & Yilin</h3>
+            <p class="inv-line">request the pleasure of your company at their wedding celebration</p>
+            <p class="inv-date">Saturday, October 15, 2026</p>
+            <p class="inv-time">at five o'clock in the evening</p>
+            <p class="inv-venue">Venue Name</p>
+            <p class="inv-address">123 Wedding Lane, City</p>
+            <p class="inv-dress">Cocktail Attire · Dinner & Dancing to Follow</p>
+            <a href="#" class="inv-rsvp-btn">RSVP</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav id="floor-nav">
+    <button class="nav-dot active" data-floor="0"><span>Title</span></button>
+    <button class="nav-dot" data-floor="1"><span>How We Met</span></button>
+    <button class="nav-dot" data-floor="2"><span>First Date</span></button>
+    <button class="nav-dot" data-floor="3"><span>In Love</span></button>
+    <button class="nav-dot" data-floor="4"><span>Invitation</span></button>
+  </nav>
+
+  <button id="audio-toggle" class="audio-btn" aria-label="Toggle music">♪</button>
+  <div id="scroll-progress"><div class="progress-fill"></div></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
+
