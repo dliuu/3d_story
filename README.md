@@ -1,8 +1,8 @@
 # Owen & Yilin — 3D wedding invitation (isometric tower)
 
-Scroll-driven 3D wedding story inspired by the [Three.js Journey](https://threejs-journey.com/) homepage: a **vertical stack of five isometric “rooms”** joined by **lavender staircases**. The **camera stays fixed** in isometric view; **scrolling moves the whole tower** on the Y axis so each floor passes through the frame. The **right-hand HTML panel** swaps chapter copy as the active floor changes.
+Scroll-driven 3D wedding story inspired by the [Three.js Journey](https://threejs-journey.com/) homepage: a **vertical stack of five isometric “rooms”**. The **camera stays fixed** in isometric view; **scrolling moves the whole tower** on the Y axis so each floor passes through the frame. The **right-hand HTML panel** swaps chapter copy as the active floor changes. Canvas **arrow buttons** jump floors if scrolling is awkward.
 
-This repo is a **Vite + Three.js skeleton** with procedural fallback geometry until Blender-exported `.glb` dioramas are added.
+This repo is a **Vite + Three.js skeleton** with procedural fallback geometry until Blender-exported `.glb` dioramas are added. **“How we met”** (`FLOORS` **index 1**, `y = 6`) uses a detailed procedural **`LibraryScene`** (study table, Owen & Yilin, shelves, window, overhead light); optional textures go under **`public/textures/library/`**.
 
 ---
 
@@ -28,7 +28,8 @@ owen-yilin-3d/
 │
 ├── public/
 │   ├── models/                # Blender .glb dioramas (optional)
-│   └── audio/                 # e.g. ambient.mp3 (optional)
+│   ├── audio/                 # e.g. ambient.mp3 (optional)
+│   └── textures/library/      # Optional maps for LibraryScene (wood_desk, mcgill_red, …)
 │
 ├── dist/                      # `npm run build` output (generated)
 │
@@ -48,9 +49,11 @@ owen-yilin-3d/
     │   └── HTMLPanelController.js # .story-panel + #floor-nav sync; onNavClick hook
     │
     ├── world/
-    │   ├── Tower.js           # THREE.Group `tower`: GLB floors or ProceduralFloors + stairs
-    │   ├── Staircase.js       # Procedural switchback stairs between two floor Y levels
-    │   └── ProceduralFloors.js# Fallback five cutaway rooms + simple props
+    │   ├── scenes/
+    │   │   └── LibraryScene.js  # Floor 1 interior: library diorama (procedural)
+    │   ├── Tower.js           # THREE.Group `tower`: GLB floors or ProceduralFloors
+    │   ├── Staircase.js       # (unused in current tower build; kept for reference)
+    │   └── ProceduralFloors.js# Room shells + per-floor props; imports LibraryScene for i===1
     │
     └── styles/
         └── main.css           # 60/40 split, panels, nav, loader, progress, responsive rules

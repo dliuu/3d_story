@@ -20,6 +20,20 @@ if (audioToggle) {
   })
 }
 
+const arrowPrev = document.getElementById('arrow-prev')
+const arrowNext = document.getElementById('arrow-next')
+const goRelative = (delta) => {
+  const current = experience.floorTracker.activeFloorIndex ?? 0
+  const max = 4
+  const next = Math.min(max, Math.max(0, current + delta))
+  if (next === current) return
+  const target = max > 0 ? next / max : 0
+  experience.scroll.goTo(target)
+}
+
+arrowPrev?.addEventListener('click', () => goRelative(-1))
+arrowNext?.addEventListener('click', () => goRelative(1))
+
 document.querySelector('.inv-rsvp-btn')?.addEventListener('click', (e) => {
   e.preventDefault()
   const el = e.currentTarget

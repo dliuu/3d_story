@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { FLOORS } from '../core/constants.js'
+import { LibraryScene } from './scenes/LibraryScene.js'
 
 const W = 5
 const H = 4.5
@@ -35,12 +36,6 @@ function makeRoomShell(accentHex) {
   left.castShadow = true
   left.receiveShadow = true
   g.add(left)
-
-  const right = new THREE.Mesh(new THREE.BoxGeometry(0.12, H, D), sideM)
-  right.position.set(W / 2 - 0.06, H / 2, 0)
-  right.castShadow = true
-  right.receiveShadow = true
-  g.add(right)
 
   const back = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.12), backM)
   back.position.set(0, H / 2, -D / 2 + 0.06)
@@ -85,32 +80,8 @@ export class ProceduralFloors {
       }
 
       if (i === 1) {
-        const desk = new THREE.Mesh(
-          new THREE.BoxGeometry(1.6, 0.08, 0.7),
-          wallMat(0x6a6058)
-        )
-        desk.position.set(0, 0.9, 0.5)
-        desk.castShadow = true
-        room.add(desk)
-
-        const shelf = new THREE.Mesh(
-          new THREE.BoxGeometry(0.25, 2.4, 1.8),
-          wallMat(0x555050)
-        )
-        shelf.position.set(-1.5, 1.3, -1.2)
-        shelf.castShadow = true
-        room.add(shelf)
-
-        const bookColors = [0x8fa4b8, 0xed1b2f, 0xcccccc]
-        for (let b = 0; b < 8; b++) {
-          const bk = new THREE.Mesh(
-            new THREE.BoxGeometry(0.14, 0.22, 0.18),
-            wallMat(bookColors[b % 3], 0.6)
-          )
-          bk.position.set(-1.48 + (b % 4) * 0.16, 1.05 + Math.floor(b / 4) * 0.24, -1.0)
-          bk.castShadow = true
-          room.add(bk)
-        }
+        const library = new LibraryScene()
+        room.add(library.group)
       }
 
       if (i === 2) {

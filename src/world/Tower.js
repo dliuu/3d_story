@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import { FLOORS } from '../core/constants.js'
-import { Staircase } from './Staircase.js'
 import { ProceduralFloors } from './ProceduralFloors.js'
 
 export class Tower {
@@ -31,11 +30,6 @@ export class Tower {
     } else {
       const procedural = new ProceduralFloors()
       this.group.add(procedural.group)
-    }
-
-    for (let i = 0; i < FLOORS.length - 1; i++) {
-      const stair = new Staircase(FLOORS[i].y, FLOORS[i + 1].y)
-      this.group.add(stair.group)
     }
   }
 

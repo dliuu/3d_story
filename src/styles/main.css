@@ -53,6 +53,40 @@ body {
   height: 100%;
 }
 
+#canvas-arrows {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.canvas-arrow {
+  pointer-events: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(220, 210, 245, 0.35);
+  background: rgba(45, 38, 64, 0.55);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.canvas-arrow:hover {
+  transform: translateY(-1px);
+  background: rgba(80, 70, 110, 0.7);
+  border-color: rgba(220, 210, 245, 0.55);
+}
+
 #story-panels {
   position: relative;
   flex: 1 1 40%;
