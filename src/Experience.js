@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import gsap from 'gsap'
 import { FLOORS } from './core/constants.js'
 import { AssetLoader } from './core/AssetLoader.js'
 import { Camera } from './core/Camera.js'
@@ -38,6 +39,31 @@ export class Experience {
     this.renderer = new Renderer()
     this.scroll = new ScrollController()
     this.floorTracker = new FloorTracker()
+    this._zoomTween = null
+
+    this.floorTracker.on('floorChange', () => {
+      if (this._zoomTween) this._zoomTween.kill()
+
+      const cam = this.camera
+      const BASE = 8
+      const PEAK = 6.2
+
+      this._zoomTween = gsap
+        .timeline()
+        .to(cam, {
+          frustumSize: PEAK,
+          duration: 0.28,
+          ease: 'power2.in',
+          onUpdate: () => cam.applyFrustum(),
+        })
+        .to(cam, {
+          frustumSize: BASE,
+          duration: 0.55,
+          ease: 'power2.out',
+          onUpdate: () => cam.applyFrustum(),
+        })
+    })
+
     this.htmlPanels = new HTMLPanelController()
 
     this._setupLighting()

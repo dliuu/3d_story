@@ -6,17 +6,10 @@ export class Camera {
     this.experience = Experience.instance
     this.sizes = this.experience.sizes
 
-    const aspect = this.sizes.width / this.sizes.height
-    const frustumSize = 8
+    this.frustumSize = 8
 
-    this.instance = new THREE.OrthographicCamera(
-      frustumSize * aspect / -2,
-      frustumSize * aspect / 2,
-      frustumSize / 2,
-      frustumSize / -2,
-      0.1,
-      100
-    )
+    this.instance = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100)
+    this.applyFrustum()
 
     const distance = 30
     const azimuth = Math.PI / 4
@@ -32,15 +25,18 @@ export class Camera {
     this.experience.scene.add(this.instance)
   }
 
+  applyFrustum() {
+    const aspect = this.sizes.width / this.sizes.height
+    this.instance.left = this.frustumSize * aspect / -2
+    this.instance.right = this.frustumSize * aspect / 2
+    this.instance.top = this.frustumSize / 2
+    this.instance.bottom = this.frustumSize / -2
+    this.instance.updateProjectionMatrix()
+  }
+
   onResize() {
     const container = document.getElementById('canvas-container')
     if (!container) return
-    const aspect = container.clientWidth / container.clientHeight
-    const frustumSize = 8
-    this.instance.left = frustumSize * aspect / -2
-    this.instance.right = frustumSize * aspect / 2
-    this.instance.top = frustumSize / 2
-    this.instance.bottom = frustumSize / -2
-    this.instance.updateProjectionMatrix()
+    this.applyFrustum()
   }
 }

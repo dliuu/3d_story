@@ -1,20 +1,18 @@
-import { FLOOR_COUNT } from './constants.js'
+import { EventEmitter } from './EventEmitter.js'
+import { FLOORS } from './constants.js'
 
-export class FloorTracker {
+export class FloorTracker extends EventEmitter {
   constructor() {
+    super()
     this.activeFloorIndex = 0
   }
 
-  getFloorIndex(progress) {
-    const p = Math.min(1, Math.max(0, progress))
-    const idx = Math.floor(p * FLOOR_COUNT)
-    return Math.min(FLOOR_COUNT - 1, idx)
-  }
-
   update(progress) {
-    const next = this.getFloorIndex(progress)
-    const changed = next !== this.activeFloorIndex
-    this.activeFloorIndex = next
-    return changed
+    const seg = 1 / FLOORS.length
+    const next = Math.min(Math.floor(progress / seg), FLOORS.length - 1)
+    if (next !== this.activeFloorIndex) {
+      this.activeFloorIndex = next
+      this.emit('floorChange', next)
+    }
   }
 }
