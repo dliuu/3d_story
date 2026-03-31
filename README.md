@@ -1,6 +1,6 @@
-# Owen & Yilin — 3D wedding invitation (isometric tower)
+# Owen & Yilin — 3D wedding invitation (landing + isometric tower)
 
-Scroll-driven 3D wedding story inspired by the [Three.js Journey](https://threejs-journey.com/) homepage: a **vertical stack of five isometric “rooms”**. The **camera stays fixed** in isometric view; **scrolling moves the whole tower** on the Y axis so each floor passes through the frame. The **right-hand HTML panel** swaps chapter copy as the active floor changes. Canvas **arrow buttons** jump floors if scrolling is awkward.
+Scroll-driven 3D wedding story inspired by the [Three.js Journey](https://threejs-journey.com/) homepage: a **full-screen landing screen** first, then a **vertical stack of five isometric “rooms”**. The **camera stays fixed** in isometric view; **scrolling moves the whole tower** on the Y axis so each floor passes through the frame. The **right-hand HTML panel** swaps chapter copy as the active floor changes. Canvas **arrow buttons** jump floors if scrolling is awkward.
 
 This repo is a **Vite + Three.js skeleton** with procedural fallback geometry until Blender-exported `.glb` dioramas are added. **“How we met”** (`FLOORS` **index 1**, `y = 6`) uses a detailed procedural **`LibraryScene`** (study table, Owen & Yilin, shelves, window, overhead light); optional textures go under **`public/textures/library/`**.
 
@@ -12,7 +12,7 @@ This repo is a **Vite + Three.js skeleton** with procedural fallback geometry un
 |--------|------|
 | **Vite** | Dev server, build, asset pipeline (`.glb`, `.gltf`, `.hdr` included) |
 | **three** | WebGL scene, orthographic isometric camera, lights, shadows |
-| **gsap** | Smooth `goTo()` tweens when using floor nav dots |
+| **gsap** | Landing animations + smooth `goTo()` tweens when using floor nav dots |
 | **Web Audio API** | Optional ambient track with filter/gain driven by scroll progress |
 
 ---
@@ -27,7 +27,7 @@ owen-yilin-3d/
 ├── README.md
 │
 ├── public/
-│   ├── models/                # Blender .glb dioramas (optional)
+│   ├── models/                # Blender .glb assets (optional)
 │   ├── audio/                 # e.g. ambient.mp3 (optional)
 │   └── textures/library/      # Optional maps for LibraryScene (wood_desk, mcgill_red, …)
 │
@@ -35,7 +35,7 @@ owen-yilin-3d/
 │
 └── src/
     ├── main.js                # Entry: CSS import, Experience bootstrap, audio + RSVP UI
-    ├── Experience.js          # Singleton: scene graph, resize, lighting, tick loop wiring
+    ├── Experience.js          # Singleton: landing/tower state, resize, lighting, tick loop wiring
     │
     ├── core/
     │   ├── constants.js       # FLOOR_HEIGHT, FLOORS[], MAX_TOWER_Y (scroll range)
@@ -44,11 +44,12 @@ owen-yilin-3d/
     │   ├── AudioController.js # Fetch/decode MP3; play/pause; scroll-reactive EQ/gain
     │   ├── Camera.js          # Fixed OrthographicCamera, isometric position & resize
     │   ├── Renderer.js        # WebGLRenderer: ACES, sRGB, soft shadows, purple clear
-    │   ├── ScrollController.js# Wheel/touch/keys → progress; damping; getTowerY(); goTo()
+    │   ├── ScrollController.js# Wheel/touch/keys → progress; disabled during landing; goTo()
     │   ├── FloorTracker.js    # Maps progress (0–1) → active floor index 0–4
     │   └── HTMLPanelController.js # .story-panel + #floor-nav sync; onNavClick hook
     │
     ├── world/
+    │   ├── LandingScene.js    # Landing 3D scene (two characters + wave + particles)
     │   ├── scenes/
     │   │   └── LibraryScene.js  # Floor 1 interior: library diorama (procedural)
     │   ├── Tower.js           # THREE.Group `tower`: GLB floors or ProceduralFloors
@@ -62,6 +63,21 @@ owen-yilin-3d/
 ---
 
 ## How it works (runtime)
+
+### Landing → Tower flow
+
+On load the app starts in a **landing state**:
+
+- **Full-screen canvas** (landing-only) + HTML overlay: “You’re Invited”, subtitle, and a down-arrow button
+- Two 3D characters (GLB if present, otherwise procedural placeholders) **wave** using GSAP
+- Tower UI is hidden and **scroll input is disabled**
+
+Entering the story:
+
+- Click the arrow (or scroll down / press ArrowDown / PageDown / Space) to trigger `experience.enterTower()`
+- Overlay fades out, canvas returns to the split layout, tower UI becomes visible, and scroll is enabled
+
+### Tower runtime
 
 1. **`ScrollController`** accumulates user input into a **target progress** (0–1) and **lerps** the current progress (damping **~0.06**).
 2. **`Tower.setY(scroll.getTowerY())`** sets `tower.position.y = -(progress × MAX_TOWER_Y)` so the stack slides through the fixed camera frustum.
@@ -103,6 +119,15 @@ npm run preview      # serve dist/
 
 ---
 
+## Adding landing character models (`.glb`)
+
+Put these files in `public/models/` (placeholders will be used until they exist):
+
+- `public/models/owen-wedding.glb` → loaded as `char-owen`
+- `public/models/yilin-wedding.glb` → loaded as `char-yilin`
+
+---
+
 ## Adding ambient audio
 
 Put **`ambient.mp3`** (or your file) in **`public/audio/`**. The app calls **`loadTrack('/audio/ambient.mp3')`**; playback still requires a **user gesture** (the ♪ button uses **`AudioController.toggle()`**).
@@ -126,6 +151,8 @@ Put **`ambient.mp3`** (or your file) in **`public/audio/`**. The app calls **`lo
 
 After `npm run dev`:
 
+- Full-screen **landing screen**: centered title/subtitle + bouncing arrow over 3D waving characters (tower UI hidden; scrolling does not move the tower).
+- Clicking the arrow transitions into the story.
 - Purple canvas area (~60% width on desktop); story column ~40%.
 - Five stacked rooms with stairs between; scroll moves the tower smoothly.
 - Right panel and nav dots follow the active floor; nav **jumps** with GSAP.

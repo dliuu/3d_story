@@ -8,6 +8,26 @@ const experience = new Experience(canvas)
 
 canvas?.addEventListener('pointerdown', () => canvas.focus(), { once: true })
 
+document.getElementById('enter-story-btn')?.addEventListener('click', () => {
+  experience.enterTower()
+})
+
+const enterFromLanding = (e) => {
+  if (experience.state !== 'landing') return
+  if (e?.type === 'wheel' && e.deltaY <= 0) return
+  e?.preventDefault?.()
+  experience.enterTower()
+  window.removeEventListener('wheel', enterFromLanding, true)
+  window.removeEventListener('keydown', enterFromLandingKey, true)
+}
+
+window.addEventListener('wheel', enterFromLanding, { passive: false, capture: true })
+const enterFromLandingKey = (e) => {
+  if (e.key !== 'ArrowDown' && e.key !== 'PageDown' && e.key !== ' ') return
+  enterFromLanding(e)
+}
+window.addEventListener('keydown', enterFromLandingKey, { capture: true })
+
 const audioToggle = document.getElementById('audio-toggle')
 if (audioToggle) {
   audioToggle.addEventListener('click', async () => {

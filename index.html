@@ -16,16 +16,29 @@
     </div>
   </div>
 
+  <!-- Landing Screen Overlay -->
+  <div id="landing-overlay">
+    <div class="landing-content">
+      <h1 class="landing-title">You're Invited</h1>
+      <p class="landing-subtitle">but first, view our story</p>
+      <button id="enter-story-btn" class="landing-arrow" aria-label="Enter story">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    </div>
+  </div>
+
   <div id="app">
     <div id="canvas-container">
       <canvas id="webgl"></canvas>
-      <div id="canvas-arrows" aria-label="Floor navigation">
+      <div id="canvas-arrows" class="hidden-for-landing" aria-label="Floor navigation">
         <button id="arrow-prev" class="canvas-arrow" type="button" aria-label="Previous room">‹</button>
         <button id="arrow-next" class="canvas-arrow" type="button" aria-label="Next room">›</button>
       </div>
     </div>
 
-    <div id="story-panels">
+    <div id="story-panels" class="hidden-for-landing">
       <div class="story-panel active" id="panel-0" data-floor="0">
         <div class="panel-inner">
           <h1 class="panel-title display">Owen & Yilin</h1>
@@ -86,7 +99,7 @@
     </div>
   </div>
 
-  <nav id="floor-nav">
+  <nav id="floor-nav" class="hidden-for-landing">
     <button class="nav-dot active" data-floor="0"><span>Title</span></button>
     <button class="nav-dot" data-floor="1"><span>How We Met</span></button>
     <button class="nav-dot" data-floor="2"><span>First Date</span></button>
@@ -94,8 +107,8 @@
     <button class="nav-dot" data-floor="4"><span>Invitation</span></button>
   </nav>
 
-  <button id="audio-toggle" class="audio-btn" aria-label="Toggle music">♪</button>
-  <div id="scroll-progress"><div class="progress-fill"></div></div>
+  <button id="audio-toggle" class="audio-btn hidden-for-landing" aria-label="Toggle music">♪</button>
+  <div id="scroll-progress" class="hidden-for-landing"><div class="progress-fill"></div></div>
 
   <script type="module" src="/src/main.js"></script>
 </body>

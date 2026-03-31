@@ -6,6 +6,7 @@ const SCROLL_SPEED = 0.0008
 
 export class ScrollController {
   constructor() {
+    this.enabled = false
     this.targetProgress = 0
     this.progress = 0
     this.scrollSpeed = SCROLL_SPEED
@@ -23,12 +24,14 @@ export class ScrollController {
   }
 
   _onWheel(e) {
+    if (!this.enabled) return
     e.preventDefault()
     const delta = e.deltaY * this.scrollSpeed
     this.targetProgress = Math.min(1, Math.max(0, this.targetProgress + delta))
   }
 
   _onKeyDown(e) {
+    if (!this.enabled) return
     if (e.key === 'ArrowDown' || e.key === 'PageDown') {
       e.preventDefault()
       this.targetProgress = Math.min(1, this.targetProgress + 0.08)
@@ -51,7 +54,7 @@ export class ScrollController {
   }
 
   _onTouchMove(e) {
-    if (!this._touch.active || !e.touches.length) return
+    if (!this.enabled || !this._touch.active || !e.touches.length) return
     e.preventDefault()
     const y = e.touches[0].clientY
     const dy = this._touch.lastY - y
