@@ -32,24 +32,24 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-body.landing-active {
-  background: var(--building-purple);
-}
-
 #app {
   display: flex;
   flex-direction: row;
   width: 100%;
   height: 100vh;
   min-height: 100dvh;
+  /* default (pre-transition): canvas fills everything */
+  --canvas-pct: 100%;
+  --panel-pct: 0%;
 }
 
 #canvas-container {
   position: relative;
-  flex: 0 0 60%;
-  max-width: 60%;
+  flex: 0 0 var(--canvas-pct);
+  max-width: var(--canvas-pct);
   background: var(--building-purple);
-  transition: flex-basis 0.9s var(--ease-out-expo), max-width 0.9s var(--ease-out-expo);
+  transition: flex-basis 0.9s cubic-bezier(0.76, 0, 0.24, 1) 0.5s,
+    max-width 0.9s cubic-bezier(0.76, 0, 0.24, 1) 0.5s;
 }
 
 #canvas-container canvas {
@@ -94,10 +94,24 @@ body.landing-active {
 
 #story-panels {
   position: relative;
-  flex: 1 1 40%;
+  flex: 0 0 var(--panel-pct);
   min-width: 0;
   background: var(--panel-bg);
   border-left: 1px solid rgba(58, 48, 40, 0.08);
+  opacity: 0;
+  overflow: hidden;
+  transition: opacity 0.5s ease 1.1s,
+    flex-basis 0.9s cubic-bezier(0.76, 0, 0.24, 1) 0.5s;
+}
+
+#app.split-active {
+  --canvas-pct: 60%;
+  --panel-pct: 40%;
+}
+
+#app.split-active #story-panels {
+  opacity: 1;
+  overflow: visible;
 }
 
 .story-panel {
@@ -277,6 +291,31 @@ body.landing-active {
 }
 
 /* --- Nav dots (right edge of canvas area) --- */
+#floor-nav,
+#scroll-progress,
+#audio-toggle,
+#canvas-arrows {
+  opacity: 0;
+  transition: opacity 0.4s ease 1.3s;
+}
+
+body.exploring #floor-nav,
+body.exploring #scroll-progress,
+body.exploring #audio-toggle,
+body.exploring #canvas-arrows {
+  opacity: 1;
+}
+
+body:not(.exploring) #floor-nav {
+  pointer-events: none;
+}
+
+body:not(.exploring) #scroll-progress,
+body:not(.exploring) #audio-toggle,
+body:not(.exploring) #canvas-arrows {
+  pointer-events: none;
+}
+
 #floor-nav {
   position: fixed;
   z-index: 50;
@@ -444,93 +483,75 @@ body.landing-active {
   color: rgba(255, 255, 255, 0.55);
 }
 
-/* --- Landing Overlay --- */
-#landing-overlay {
+/* ─── Landing overlay ─── */
+#landing-screen {
   position: fixed;
   inset: 0;
   z-index: 100;
+  background: var(--building-purple);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  pointer-events: none;
-  opacity: 1;
-}
-
-#landing-overlay .landing-content {
-  text-align: center;
   pointer-events: auto;
+  transition: opacity 0.55s ease 0.85s;
 }
 
-.landing-title {
-  font-family: var(--font-display);
-  font-size: clamp(3rem, 8vw, 5.5rem);
-  font-weight: 300;
-  color: #fff;
-  letter-spacing: 0.02em;
-  line-height: 1.1;
-  margin-bottom: 0.75rem;
-  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.35);
-}
-
-.landing-subtitle {
-  font-family: var(--font-display);
-  font-size: clamp(1rem, 2.5vw, 1.4rem);
-  font-weight: 300;
-  font-style: italic;
-  color: rgba(255, 255, 255, 0.75);
-  letter-spacing: 0.04em;
-  margin-bottom: 2.5rem;
-  text-shadow: 0 1px 15px rgba(0, 0, 0, 0.3);
-}
-
-.landing-arrow {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: background 0.3s, border-color 0.3s, transform 0.3s;
-  animation: landing-bounce 2s ease-in-out infinite;
-}
-
-.landing-arrow:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(2px);
-}
-
-@keyframes landing-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(8px); }
-}
-
-#landing-overlay.exiting {
+#landing-screen.fade-out {
   opacity: 0;
-  transition: opacity 0.9s var(--ease-out-expo);
   pointer-events: none;
 }
 
-.hidden-for-landing {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transition: opacity 0.6s var(--ease-out-expo) !important;
-}
-
-body.landing-active #canvas-container {
-  flex: 0 0 100%;
-  max-width: 100%;
-}
-
-body.landing-active #story-panels {
+#landing-screen.gone {
   display: none;
+}
+
+.landing-inner {
+  text-align: center;
+  color: #faf7f2;
+}
+
+#landing-screen .landing-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--champagne);
+  margin-bottom: 1.2rem;
+}
+
+#landing-screen .landing-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 8vw, 6rem);
+  font-weight: 300;
+  line-height: 1.05;
+  margin-bottom: 1rem;
+  color: #faf7f2;
+}
+
+#landing-screen .landing-sub {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.1rem;
+  opacity: 0.7;
+  margin-bottom: 2.5rem;
+}
+
+.enter-button {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--building-purple);
+  background: var(--champagne);
+  border: none;
+  padding: 0.75rem 2.2rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.enter-button:hover {
+  opacity: 0.85;
 }
 
 /* --- Responsive --- */
@@ -540,16 +561,27 @@ body.landing-active #story-panels {
   }
 
   #canvas-container {
-    flex: 0 0 50vh;
     max-width: 100%;
     width: 100%;
     min-height: 45vh;
   }
 
+  #app:not(.split-active) #canvas-container {
+    flex: 1 1 100%;
+    min-height: 100dvh;
+  }
+
+  #app.split-active #canvas-container {
+    flex: 0 0 50vh;
+  }
+
   #story-panels {
-    flex: 1 1 auto;
     border-left: none;
     border-top: 1px solid rgba(58, 48, 40, 0.08);
+  }
+
+  #app.split-active #story-panels {
+    flex: 1 1 auto;
   }
 
   #floor-nav {

@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import gsap from 'gsap'
 import { Experience } from '../Experience.js'
 
 export class Camera {
@@ -6,7 +7,7 @@ export class Camera {
     this.experience = Experience.instance
     this.sizes = this.experience.sizes
 
-    this.frustumSize = 8
+    this.frustumSize = 5
 
     this.instance = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100)
     this.applyFrustum()
@@ -38,5 +39,22 @@ export class Camera {
     const container = document.getElementById('canvas-container')
     if (!container) return
     this.applyFrustum()
+  }
+
+  /**
+   * GSAP tween frustumSize from current value to target.
+   * Called by Experience during transition.
+   */
+  zoomTo(targetFrustumSize, duration = 1.0, ease = 'power2.inOut') {
+    const state = { v: this.frustumSize }
+    gsap.to(state, {
+      v: targetFrustumSize,
+      duration,
+      ease,
+      onUpdate: () => {
+        this.frustumSize = state.v
+        this.applyFrustum()
+      },
+    })
   }
 }

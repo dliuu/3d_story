@@ -1,6 +1,6 @@
 # Owen & Yilin — 3D wedding invitation (landing + isometric tower)
 
-Scroll-driven 3D wedding story inspired by the [Three.js Journey](https://threejs-journey.com/) homepage: a **full-screen landing screen** first, then a **vertical stack of five isometric “rooms”**. The **camera stays fixed** in isometric view; **scrolling moves the whole tower** on the Y axis so each floor passes through the frame. The **right-hand HTML panel** swaps chapter copy as the active floor changes. Canvas **arrow buttons** jump floors if scrolling is awkward.
+Scroll-driven 3D wedding story inspired by the [Three.js Journey](https://threejs-journey.com/) homepage: a **full-screen cinematic landing** over the **same WebGL canvas** as the dollhouse, then a **split layout** (~60% canvas / ~40% story) with a **vertical stack of five isometric “rooms”**. The **camera stays fixed** in isometric view; **scrolling moves the whole tower** on the Y axis so each floor passes through the frame. The **right-hand HTML panel** swaps chapter copy as the active floor changes. Canvas **arrow buttons** jump floors if scrolling is awkward.
 
 This repo is a **Vite + Three.js skeleton** with procedural fallback geometry until Blender-exported `.glb` dioramas are added. **“How we met”** (`FLOORS` **index 1**, `y = 6`) uses a detailed procedural **`LibraryScene`** (study table, Owen & Yilin, shelves, window, overhead light); optional textures go under **`public/textures/library/`**.
 
@@ -12,7 +12,7 @@ This repo is a **Vite + Three.js skeleton** with procedural fallback geometry un
 |--------|------|
 | **Vite** | Dev server, build, asset pipeline (`.glb`, `.gltf`, `.hdr` included) |
 | **three** | WebGL scene, orthographic isometric camera, lights, shadows |
-| **gsap** | Landing animations + smooth `goTo()` tweens when using floor nav dots |
+| **gsap** | Landing→explore camera zoom, floor-change frustum punch, smooth `goTo()` tweens |
 | **Web Audio API** | Optional ambient track with filter/gain driven by scroll progress |
 
 ---
@@ -21,7 +21,7 @@ This repo is a **Vite + Three.js skeleton** with procedural fallback geometry un
 
 ```
 owen-yilin-3d/
-├── index.html                 # Split UI: loader, canvas (left), story panels, nav, progress bar
+├── index.html                 # Loader, #landing-screen, #app split (canvas + story), nav, progress
 ├── package.json
 ├── vite.config.js             # Port 3000, glsl plugin, build → dist/
 ├── README.md
@@ -35,21 +35,21 @@ owen-yilin-3d/
 │
 └── src/
     ├── main.js                # Entry: CSS import, Experience bootstrap, audio + RSVP UI
-    ├── Experience.js          # Singleton: landing/tower state, resize, lighting, tick loop wiring
+    ├── Experience.js          # Singleton: appState, transition, ResizeObserver, lighting, tick
     │
     ├── core/
     │   ├── constants.js       # FLOOR_HEIGHT, FLOORS[], MAX_TOWER_Y (scroll range)
     │   ├── EventEmitter.js    # Minimal on/off/emit
     │   ├── AssetLoader.js     # GLTF (+ Draco), texture, HDR, audio; progress + complete
     │   ├── AudioController.js # Fetch/decode MP3; play/pause; scroll-reactive EQ/gain
-    │   ├── Camera.js          # Fixed OrthographicCamera, isometric position & resize
+    │   ├── Camera.js          # OrthographicCamera, isometric pose; frustum + zoomTo()
     │   ├── Renderer.js        # WebGLRenderer: ACES, sRGB, soft shadows, purple clear
-    │   ├── ScrollController.js# Wheel/touch/keys → progress; disabled during landing; goTo()
+    │   ├── ScrollController.js# Wheel/touch/keys → progress; locked until transition ends; unlock(); goTo()
     │   ├── FloorTracker.js    # Maps progress (0–1) → active floor index 0–4
     │   └── HTMLPanelController.js # .story-panel + #floor-nav sync; onNavClick hook
     │
     ├── world/
-    │   ├── LandingScene.js    # Landing 3D scene (two characters + wave + particles)
+    │   ├── LandingScene.js    # Legacy: separate 3D landing (not used; tower renders behind HTML overlay)
     │   ├── scenes/
     │   │   └── LibraryScene.js  # Floor 1 interior: library diorama (procedural)
     │   ├── Tower.js           # THREE.Group `tower`: GLB floors or ProceduralFloors
@@ -57,27 +57,36 @@ owen-yilin-3d/
     │   └── ProceduralFloors.js# Room shells + per-floor props; imports LibraryScene for i===1
     │
     └── styles/
-        └── main.css           # 60/40 split, panels, nav, loader, progress, responsive rules
+        └── main.css           # Landing overlay, CSS-var split (100/0 → 60/40), panels, nav, responsive
 ```
 
 ---
 
 ## How it works (runtime)
 
-### Landing → Tower flow
+### App state
 
-On load the app starts in a **landing state**:
+`Experience` tracks **`appState`**: `'landing'` → `'transitioning'` → `'exploring'`.
 
-- **Full-screen canvas** (landing-only) + HTML overlay: “You’re Invited”, subtitle, and a down-arrow button
-- Two 3D characters (GLB if present, otherwise procedural placeholders) **wave** using GSAP
-- Tower UI is hidden and **scroll input is disabled**
+- **`ScrollController`** starts with **`_locked === true`** and ignores wheel, touch-move, and keyboard scroll until **`unlock()`** runs after the transition (~1.4s). **`goTo()`** also no-ops while locked.
 
-Entering the story:
+### Landing → exploring flow
 
-- Click the arrow (or scroll down / press ArrowDown / PageDown / Space) to trigger `experience.enterTower()`
-- Overlay fades out, canvas returns to the split layout, tower UI becomes visible, and scroll is enabled
+The **tower is always in the scene**; nothing is torn down or swapped for a different Three.js world.
 
-### Tower runtime
+1. **Landing** — `#landing-screen` is a **fixed full-viewport HTML overlay** (purple, names, date, **Enter ↓**) above `#app`. The WebGL canvas fills `#app` at **100% / 0%** (canvas / story) via CSS custom properties **`--canvas-pct`** / **`--panel-pct`**. Nav dots, progress bar, audio control, and canvas arrows are **`opacity: 0`** until **`body.exploring`**. Initial orthographic **`frustumSize`** is **5** (tighter framing).
+
+2. **Trigger** — User clicks **Enter** or the first **wheel** / **touchstart** (listeners removed once transition starts).
+
+3. **Transition (~1.4s)** — **`_startTransition()`** in `Experience.js`:
+   - **`camera.zoomTo(8, …)`** — frustum opens to normal dollhouse zoom
+   - **`#landing-screen`** gets **`.fade-out`** (CSS delayed opacity fade)
+   - **`#app`** gets **`.split-active`** — flex animates to **60% / 40%**; story column fades in
+   - After **1400ms**: overlay **`.gone`**, **`scroll.unlock()`**, **`body.classList.add('exploring')`**, **`appState = 'exploring'`**
+
+**Layout / WebGL sync:** the canvas container width changes during the flex transition **without** a window `resize` event. A **`ResizeObserver`** on **`#canvas-container`** calls **`onResize()`** whenever its box changes so **renderer size** and **camera aspect** match the real column width (fixes the tower looking “full-width but cropped” or shifted).
+
+### Tower runtime (exploring)
 
 1. **`ScrollController`** accumulates user input into a **target progress** (0–1) and **lerps** the current progress (damping **~0.06**).
 2. **`Tower.setY(scroll.getTowerY())`** sets `tower.position.y = -(progress × MAX_TOWER_Y)` so the stack slides through the fixed camera frustum.
@@ -119,12 +128,9 @@ npm run preview      # serve dist/
 
 ---
 
-## Adding landing character models (`.glb`)
+## Optional character `.glb` entries (manifest)
 
-Put these files in `public/models/` (placeholders will be used until they exist):
-
-- `public/models/owen-wedding.glb` → loaded as `char-owen`
-- `public/models/yilin-wedding.glb` → loaded as `char-yilin`
+`ASSET_MANIFEST` may still list **`char-owen`** / **`char-yilin`** for **`public/models/owen-wedding.glb`** and **`yilin-wedding.glb`**. The **current** landing is **HTML-only** over the tower; those assets are **not** displayed unless you wire them back in. You can remove those entries from the manifest if you want fewer downloads.
 
 ---
 
@@ -138,7 +144,11 @@ Put **`ambient.mp3`** (or your file) in **`public/audio/`**. The app calls **`lo
 
 | What | Where | Default (approx.) |
 |------|--------|-------------------|
-| Ortho zoom | `Camera.js` — `frustumSize` | `8` |
+| Landing ortho zoom | `Camera.js` — initial `frustumSize` | **5** |
+| Post-transition zoom | `Experience._startTransition()` — `zoomTo(8, …)` | **8** |
+| Transition length | `Experience.js` — `setTimeout` in `_startTransition` | **1400** ms |
+| Split / overlay timing | `src/styles/main.css` — `#landing-screen`, `#app`, `#story-panels` transitions | see CSS |
+| Ortho zoom (per floor) | `Experience` floor-change tween — `BASE` / `PEAK` | **8** / **6.2** |
 | Scroll sensitivity | `ScrollController.js` — `SCROLL_SPEED` | `0.0008` |
 | Vertical spacing | `constants.js` — `FLOOR_HEIGHT` / `FLOORS[].y` | `6` units between floors |
 | Stair lateral offset | `Staircase.js` — `x` | `3.0` |
@@ -151,14 +161,15 @@ Put **`ambient.mp3`** (or your file) in **`public/audio/`**. The app calls **`lo
 
 After `npm run dev`:
 
-- Full-screen **landing screen**: centered title/subtitle + bouncing arrow over 3D waving characters (tower UI hidden; scrolling does not move the tower).
-- Clicking the arrow transitions into the story.
-- Purple canvas area (~60% width on desktop); story column ~40%.
+- **Loader**, then **full-viewport purple landing** with date, **Owen & Yilin**, subtitle, **Enter ↓** over the **live tower** (same canvas; tower at **y = 0**).
+- Nav, progress, audio, and canvas arrows stay hidden until transition completes.
+- **Enter** or first **scroll / touch** starts the transition: camera zooms out, overlay fades, **60/40 split** animates in.
+- Purple canvas area (~60% width on desktop); story column ~40%; tower stays **correctly framed** in the canvas column (resize observer).
 - Five stacked rooms with stairs between; scroll moves the tower smoothly.
 - Right panel and nav dots follow the active floor; nav **jumps** with GSAP.
 - Bottom **progress bar** tracks scroll.
 - **RSVP** uses a mailto fallback unless you set `data-rsvp-url` on the button.
-- Below **768px** width, layout stacks: canvas on top, panels below.
+- Below **768px** width, layout stacks: full-height canvas before split; after split, canvas ~50vh, panels below.
 
 ---
 

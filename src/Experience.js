@@ -9,7 +9,6 @@ import { FloorTracker } from './core/FloorTracker.js'
 import { HTMLPanelController } from './core/HTMLPanelController.js'
 import { AudioController } from './core/AudioController.js'
 import { Tower } from './world/Tower.js'
-import { LandingScene } from './world/LandingScene.js'
 
 /**
  * Add optional .glb dioramas here: { name: `floor-${FLOORS[i].id}`, type: 'gltf', path: '/models/....glb' }
@@ -30,8 +29,6 @@ export class Experience {
     this.scene = new THREE.Scene()
     this.clock = new THREE.Clock()
 
-    document.body.classList.add('landing-active')
-
     this.sizes = {
       width: 1,
       height: 1,
@@ -46,8 +43,7 @@ export class Experience {
     this.scroll = new ScrollController()
     this.floorTracker = new FloorTracker()
     this._zoomTween = null
-    this.state = 'landing' // 'landing' | 'transitioning' | 'tower'
-    this.landingScene = new LandingScene(this.assetLoader, this.sizes)
+    this.appState = 'landing'
 
     this.floorTracker.on('floorChange', () => {
       if (this._zoomTween) this._zoomTween.kill()
@@ -78,6 +74,7 @@ export class Experience {
 
     this.tower = new Tower(this.assetLoader)
     this.scene.add(this.tower.group)
+    this.tower.setY(0)
 
     this.assetLoader.on('complete', () => {
       const hasAll = FLOORS.every((f) => {
@@ -88,6 +85,7 @@ export class Experience {
         this.scene.remove(this.tower.group)
         this.tower = new Tower(this.assetLoader)
         this.scene.add(this.tower.group)
+        this.tower.setY(this.appState === 'exploring' ? this.scroll.getTowerY() : 0)
       }
       const loaderEl = document.getElementById('loader')
       loaderEl?.classList.add('hidden')
@@ -112,7 +110,54 @@ export class Experience {
 
     window.addEventListener('resize', () => this.onResize())
 
+    const canvasHost = document.getElementById('canvas-container')
+    if (canvasHost && typeof ResizeObserver !== 'undefined') {
+      this._canvasResizeObserver = new ResizeObserver(() => this.onResize())
+      this._canvasResizeObserver.observe(canvasHost)
+    }
+
+    document.getElementById('enter-btn')?.addEventListener('click', () => this._startTransition())
+
+    this._onFirstScrollAttempt = () => {
+      this._startTransition()
+    }
+    window.addEventListener('wheel', this._onFirstScrollAttempt, { passive: true })
+    window.addEventListener('touchstart', this._onFirstScrollAttempt, { passive: true })
+
     this.tick()
+  }
+
+  _removeFirstScrollListeners() {
+    if (!this._onFirstScrollAttempt) return
+    window.removeEventListener('wheel', this._onFirstScrollAttempt, { passive: true })
+    window.removeEventListener('touchstart', this._onFirstScrollAttempt, { passive: true })
+    this._onFirstScrollAttempt = null
+  }
+
+  _startTransition() {
+    if (this.appState !== 'landing') return
+    this.appState = 'transitioning'
+    this._removeFirstScrollListeners()
+
+    const landing = document.getElementById('landing-screen')
+    const app = document.getElementById('app')
+
+    this.camera.zoomTo(8, 1.0, 'power2.inOut')
+
+    landing?.classList.add('fade-out')
+    app?.classList.add('split-active')
+    this.onResize()
+    requestAnimationFrame(() => {
+      this.onResize()
+      requestAnimationFrame(() => this.onResize())
+    })
+
+    setTimeout(() => {
+      landing?.classList.add('gone')
+      this.scroll.unlock()
+      document.body.classList.add('exploring')
+      this.appState = 'exploring'
+    }, 1400)
   }
 
   _updateSizes() {
@@ -148,51 +193,16 @@ export class Experience {
     this._updateSizes()
     this.camera.onResize()
     this.renderer.onResize()
-    this.landingScene?.onResize?.(this.sizes.width, this.sizes.height)
-  }
-
-  enterTower() {
-    if (this.state !== 'landing') return
-    this.state = 'transitioning'
-
-    const overlay = document.getElementById('landing-overlay')
-    overlay?.classList.add('exiting')
-
-    document.body.classList.remove('landing-active')
-
-    gsap.delayedCall(1.0, () => {
-      this.state = 'tower'
-      if (overlay) overlay.style.display = 'none'
-
-      document.getElementById('floor-nav')?.classList.remove('hidden-for-landing')
-      document.getElementById('scroll-progress')?.classList.remove('hidden-for-landing')
-      document.getElementById('canvas-arrows')?.classList.remove('hidden-for-landing')
-      document.getElementById('story-panels')?.classList.remove('hidden-for-landing')
-      document.getElementById('audio-toggle')?.classList.remove('hidden-for-landing')
-
-      this.scroll.enabled = true
-
-      if (this.landingScene) {
-        this.landingScene.dispose()
-        this.landingScene = null
-      }
-
-      this.onResize()
-    })
   }
 
   tick() {
     window.requestAnimationFrame(() => this.tick())
 
-    const dt = this.clock.getDelta()
+    this.clock.getDelta()
 
-    if (this.state === 'landing' || this.state === 'transitioning') {
-      this.landingScene?.update?.(dt)
-      if (this.landingScene) {
-        this.renderer.instance.render(this.landingScene.scene, this.landingScene.camera)
-      } else {
-        this.renderer.render()
-      }
+    if (this.appState !== 'exploring') {
+      this.tower.setY(0)
+      this.renderer.render()
       return
     }
 
